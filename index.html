@@ -10,28 +10,43 @@
 <body>
     <div class="container">
         <h3>Socket.io Chat Example</h3>
-        <form class="form-inline">
+        <form id="loginForm" class="form-inline" >
             <div class="form-group">
-                <label for="msgForm">Message: </label>
-                <input type="text" class="form-control" id="msgForm">
+               <label for="loginForm">이름 : </label>
+               <input type="text" class="form-control" id="loginFormInput">
             </div>
-            <button type="submit" class="btn btn-primary">Send</button>
+            <button id="loginfFormButton" type="button" class="btn btn-primary">접속하기</button>
         </form>
+        
+        <form id="msgForm" class="form-inline" style="display: none;">
+            <div class="form-group">
+               <label for="msgForm">메시지 : </label>
+               <input type="text" class="form-control" id="msgFormInput">
+            </div>
+            <button id="msgFormButton" type="button" class="btn btn-primary">Send</button>
+        </form>
+        
         <div id="chatLogs"></div>
+        
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        $(function() {
+        $("#loginForm").submit(function(e ){
+            e.preventDefault();
+            $("#loginfFormButton").click();
+        });
+        
+        $("#loginfFormButton").click( function() {
             // socket.io 서버에 접속한다
             var socket = io();
 
             // 서버로 자신의 정보를 전송한다.
             socket.emit("login", {
                 // name: "ungmo2",
-                name: makeRandomName(),
-                userid: "ungmo2@gmail.com"
+                name: $("#loginFormInput").val()
             });
+            console.log("Login as : " + $("#loginFormInput").val());
 
             // 서버로부터의 메시지가 수신되면
             socket.on("login", function(data) {
@@ -40,23 +55,33 @@
 
             // 서버로부터의 메시지가 수신되면
             socket.on("chat", function(data) {
-                $("#chatLogs").append("<div>" + data.msg + " : from <strong>" + data.from.name + "</strong></div>");
+                $("#chatLogs").append("<div><strong>" + data.from.name + "</strong> : " + data.msg + "</div>");
             });
 
             // Send 버튼이 클릭되면
-            $("form").submit(function(e) {
+            $("#msgForm").submit(function(e){
                 e.preventDefault();
-                var $msgForm = $("#msgForm");
+                $("#msgFormButton").click();
+            });
+                                
+            $("#msgFormButton").click(function(e){
+                e.preventDefault();
+                var msg = $("#msgFormInput").val();
+                $("#msgFormInput").val("");
 
                 // 서버로 메시지를 전송한다.
                 socket.emit("chat", {
-                    msg: $msgForm.val()
+                    msg: msg
                 });
 
                 // 내 로그에도 표시해준다.
-                $("#chatLogs").append("<div>" +$msgForm.val() + " : from <strong>ME</strong></div>");
-                $msgForm.val("");
+                $("#chatLogs").append("<div><strong>나 : </strong>" +msg + "</div>");
+                
             });
+            
+            $("#loginFormInput").val("");
+            $("#loginForm").hide();
+            $("#msgForm").show();
 
             function makeRandomName() {
                 var name = "";
